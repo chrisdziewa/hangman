@@ -12,11 +12,7 @@ class GameEngine
         @view = view
         @view.set_player_name
         @view.intro
-        @file.pick_new_word
-        @hearts_left = 6
-        @used_letters = []
-        @player_wins = false
-        play
+        reset
     end
 
     def play
@@ -36,6 +32,15 @@ class GameEngine
             check_player_win
         end
         get_outcome
+    end
+
+    def reset
+        puts "Alright, #{@view.name}, let's play!!"
+        @file.pick_new_word
+        @hearts_left = 6
+        @used_letters = []
+        @player_wins = false
+        play
     end
 
     def check_player_win
@@ -60,6 +65,22 @@ class GameEngine
         word = @file.secret_word
         result = @player_wins == true  ? "win" : "lose"
         @view.outcome(result, word)
+        ask_to_play_again
+    end
+
+    def ask_to_play_again
+        loop do
+            puts "Would you like to play again? (y/n)"
+            response = gets.chomp
+            next if response == ""
+            if response[0].downcase == "y"
+                reset
+                break
+            elsif response[0].downcase == "n"
+                puts "Thanks for playing! Goodbye!"
+                exit
+            end
+        end
     end
 
     def get_guess
@@ -106,6 +127,7 @@ class GameEngine
     def valid_letter?(letter)
         letter =~ /^[a-z]$/i
     end
+
 end
 
 game = GameEngine.new(file, view)
