@@ -1,5 +1,5 @@
 class FileReader
-    attr_reader :word
+    attr_accessor :word
     def initialize(file_name)
         @file = File.new(file_name, "r")
         # create array of words from file
@@ -9,6 +9,10 @@ class FileReader
 
     def secret_word
         @word
+    end
+
+    def secret_word=(new_word)
+        @word = new_word
     end
 
     def pick_new_word

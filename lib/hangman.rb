@@ -1,5 +1,6 @@
 require_relative('./file_reader')
 require_relative('./view')
+require 'yaml'
 
 # For reading wordlist from file
 file = FileReader.new("words.txt")
@@ -16,26 +17,25 @@ class GameEngine
     end
 
     def play
-        # intial empty feedback
-        feedback =  " _ " * @file.secret_word.length
-        @view.feedback(feedback)
+        ask_to_load_game
         until @hearts_left == 0 || @player_wins
             @view.separator
-            show_used_letters
+            how_many_hearts
 
-            get_guess
             feedback = get_feedback
             @view.feedback(feedback)
 
+            show_used_letters
+            get_guess
+
             @hearts_left -= 1 if letter_not_found?
-            how_many_hearts
             check_player_win
         end
         get_outcome
     end
 
     def reset
-        puts "Alright, #{@view.name}, let's play!!"
+        puts "Alright, let's play!!"
         @file.pick_new_word
         @hearts_left = 6
         @used_letters = []
@@ -83,16 +83,67 @@ class GameEngine
         end
     end
 
+    def get_saved_game_file
+        puts "Previous game loaded!"
+        file = File.new('./saved_games/saved_progress.yml', 'r')
+        contents = file.read
+        data = YAML::load(contents)
+    end
+
+    #   secret_word: @file.secret_word,
+    #   hearts: @hearts_left,
+    #   used_letters: @used_letters,
+    #   player_name: @view.name
+    # Set current game variables from file contents
+    def load_saved_game
+        game_data = get_saved_game_file
+        @file.secret_word = game_data[:secret_word] || @file.pick_new_word
+        @used_letters = game_data[:used_letters] || []
+        @hearts_left = game_data[:hearts] || 6
+    end
+
+    def ask_to_load_game
+        puts "Would you like to load your previous game from the last save? (y/n)"
+        response = gets.chomp
+        response[0].downcase == 'y' && response != "" ? load_saved_game : return
+
+    end
+
+    def save
+        Dir.mkdir('saved_games') unless Dir.exists?('saved_games')
+        file_name = 'saved_progress.yml'
+        file = make_file(file_name, 'saved_games')
+        exit
+    end
+
+    def get_data_for_saving
+        save_object = {
+            secret_word: @file.secret_word,
+            hearts: @hearts_left,
+            used_letters: @used_letters
+        }
+    end
+
+    def make_file(name, directory)
+        data = get_data_for_saving
+        data_string = YAML::dump(data)
+        file = File.open('./' + directory + '/' + name, "w") { |f| f.write(data_string)}
+    end
+
     def get_guess
-        puts "Please choose a letter from a-z:"
+        puts "Please choose a letter from a-z or you can type 'save' to save and exit your current game:"
         loop do
-            letter = gets.chomp
-            if letter_in_used_letters?(letter)
+            input = gets.chomp
+            if input == 'save'
+                save
+                break
+            end
+            if letter_in_used_letters?(input)
                 puts "You already used that letter! Pick a new one:"
                 next
-            elsif valid_letter?(letter)
-                @used_letters.push(letter.downcase)
-                return letter
+            elsif valid_letter?(input)
+                @used_letters.push(input.downcase)
+                return input
                 break
             else
                 puts "That isn't a valid letter! a-z only:"
