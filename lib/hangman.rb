@@ -84,29 +84,31 @@ class GameEngine
     end
 
     def get_saved_game_file
-        puts "Previous game loaded!"
-        file = File.new('./saved_games/saved_progress.yml', 'r')
-        contents = file.read
-        data = YAML::load(contents)
+        if File.exist?('./saved_games/saved_progress.yml')
+            file = File.new('./saved_games/saved_progress.yml', 'r')
+            contents = file.read
+            data = YAML::load(contents)
+        else
+            return false
+        end
     end
 
-    #   secret_word: @file.secret_word,
-    #   hearts: @hearts_left,
-    #   used_letters: @used_letters,
-    #   player_name: @view.name
-    # Set current game variables from file contents
+    # Set current game variables from file contents if saved game file exists
     def load_saved_game
         game_data = get_saved_game_file
-        @file.secret_word = game_data[:secret_word] || @file.pick_new_word
-        @used_letters = game_data[:used_letters] || []
-        @hearts_left = game_data[:hearts] || 6
+        if game_data
+            @file.secret_word = game_data[:secret_word] || @file.pick_new_word
+            @used_letters = game_data[:used_letters] || []
+            @hearts_left = game_data[:hearts] || 6
+        else
+            puts "There is no saved file, starting new game"
+        end
     end
 
     def ask_to_load_game
         puts "Would you like to load your previous game from the last save? (y/n)"
         response = gets.chomp
         response[0].downcase == 'y' && response != "" ? load_saved_game : return
-
     end
 
     def save
