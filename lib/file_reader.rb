@@ -8,7 +8,7 @@ class FileReader
     end
 
     def secret_word
-        @word
+        @word.downcase
     end
 
     def secret_word=(new_word)
